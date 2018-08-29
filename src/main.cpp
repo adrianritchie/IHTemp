@@ -10,8 +10,8 @@
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
 #include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
-//#define BLYNK_PRINT Serial
-//#define BLYNK_DEBUG
+#define BLYNK_PRINT Serial
+#define BLYNK_DEBUG
 //#define BLYNK_SSL_USE_LETSENCRYPT
 #include <BlynkSimpleEsp8266.h>
 
@@ -54,14 +54,17 @@ void blynkTimerCallback() {
   Serial.print("Temperature for the device 1 (index 0) is: ");
   Serial.println(sensors.getTempCByIndex(0));  
 
-    if (Blynk.connected()) {
-        Blynk.virtualWrite(atoi(virtual_pin), sensors.getTempCByIndex(0));  
-        Serial.println("Value sent to Blynk");
-    }
-    else {
-        Serial.println("Connecting to blynk");
-        Blynk.connect();
-    }
+  if (!Blynk.connected()) {
+      Serial.println("Connecting to blynk");
+      Blynk.connect();
+      Serial.print("Is Blynk connected: ");
+      Serial.println(Blynk.connected());
+  }
+
+  Blynk.virtualWrite(atoi(virtual_pin), sensors.getTempCByIndex(0));  
+  Serial.println("Value sent to Blynk");
+  Serial.print("     Up time: ");
+  Serial.println(millis()/1000L);
 }
 
 void setup() {
@@ -69,8 +72,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println();
 
-
-    pinMode(D2, INPUT_PULLUP);
+  pinMode(D2, INPUT_PULLUP);
   delay(5000);
 
   if (digitalRead(D2) == LOW) {
@@ -136,9 +138,6 @@ void setup() {
   //set config save notify callback
   wifiManager.setSaveConfigCallback(saveConfigCallback);
 
-  //set static ip
-  //wifiManager.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
-  
   //add all your parameters here
   wifiManager.addParameter(&custom_mqtt_server);
   wifiManager.addParameter(&custom_mqtt_port);
@@ -192,10 +191,10 @@ void setup() {
   Serial.println("connected...yeey :)");
 
   //read updated parameters
-  strcpy(mqtt_server, custom_mqtt_server.getValue());
-  strcpy(mqtt_port, custom_mqtt_port.getValue());
-  strcpy(blynk_token, custom_blynk_token.getValue());
-  strcpy(virtual_pin, custom_virtual_pin.getValue());
+    strcpy(mqtt_server, custom_mqtt_server.getValue());
+    strcpy(mqtt_port, custom_mqtt_port.getValue());
+    strcpy(blynk_token, custom_blynk_token.getValue());
+    strcpy(virtual_pin, custom_virtual_pin.getValue());
 
   //save the custom parameters to FS
   if (shouldSaveConfig) {
@@ -223,9 +222,10 @@ void setup() {
 
 
   Blynk.config(blynk_token, mqtt_server, atoi(mqtt_port));
+  Blynk.connect(); 
 
-    // Setup a function to be called every second
-  timer.setInterval(1000L, blynkTimerCallback);
+  // Setup a function to be called every second
+  timer.setInterval(30000L, blynkTimerCallback);
 
 
   // Start up the library
