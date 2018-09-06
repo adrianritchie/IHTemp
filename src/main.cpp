@@ -18,6 +18,8 @@
 // Data wire is plugged into port 2 on the Arduino
 #define ONE_WIRE_BUS D6
 
+#define RESET_PIN D5
+
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
 
@@ -72,10 +74,10 @@ void setup() {
   Serial.begin(9600);
   Serial.println();
 
-  pinMode(D2, INPUT_PULLUP);
+  pinMode(RESET_PIN, INPUT_PULLUP);
   delay(5000);
 
-  if (digitalRead(D2) == LOW) {
+  if (digitalRead(RESET_PIN) == LOW) {
       Serial.println("Flash storage being formatted");
     SPIFFS.format();
   }
@@ -146,13 +148,13 @@ void setup() {
 
   //reset settings - for testing
 
-  if (digitalRead(D2) == LOW) {
+  if (digitalRead(RESET_PIN) == LOW) {
     Serial.println("Wifi settings being reset");
     wifiManager.resetSettings();
 
     bool ledState = HIGH;
     pinMode(LED_BUILTIN, OUTPUT);  
-    while (digitalRead(D2) == LOW) {
+    while (digitalRead(RESET_PIN) == LOW) {
         digitalWrite(LED_BUILTIN, ledState);
         ledState = (ledState == HIGH) ? LOW : HIGH;
         delay(1000);
